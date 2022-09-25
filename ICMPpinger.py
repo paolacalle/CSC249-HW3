@@ -19,51 +19,54 @@ ICMP_ECHO_REQUEST = 8
 #  
 # You do not need to modify this method
 # -------------------------------------
-def checksum(string): 
+
+
+def checksum(string):  #input: string is pram of checksum; ouput: a string (based on the info on this string it is determined if some sort of failures occured?)
     csum = 0
-    countTo = (len(string) // 2) * 2 
+    countTo = (len(string) // 2) * 2 #wouldn't this just cancel the 2 out? why do this?
     count = 0
 
     while count < countTo: 
-        thisVal = ord(string[count+1]) * 256 + ord(string[count]) 
-        csum = csum + thisVal
+        thisVal = ord(string[count+1]) * 256 + ord(string[count]) #ord returns the unicode associated with a character 
+        csum = csum + thisVal #checsum value is added to the value unicode count value 
         csum = csum & 0xffffffff 
-        count = count + 2
-
-    if countTo < len(string):
-        csum = csum + ord(string[len(string) - 1]) 
+        count = count + 2 #count increments by 2
+    
+    
+    if countTo < len(string): #runs only if countTo is less than the length of the given string 
+        csum = csum + ord(string[len(string) - 1]) #if the length of the string is less than countTo, it updates csum to be the sum of csum and unicode of string length menus one
         csum = csum & 0xffffffff
 
-    csum = (csum >> 16) + (csum & 0xffff) 
-    csum = csum + (csum >> 16)
+    csum = (csum >> 16) + (csum & 0xffff) #>> shift right by pushing copies of the leftmost bit in from the left, and let the rightmost bits fall off
+    csum = csum + (csum >> 16) 
 
-    answer = ~csum
+    answer = ~csum #Inverts all the bits
 
     answer = answer & 0xffff
  
     answer = answer >> 8 | (answer << 8 & 0xff00) 
     return answer
 
-
+#a socket is end point of communication 
 def receiveOnePing(mySocket, ID, timeout, destAddr): 
     
-    timeLeft = timeout
+    timeLeft = timeout #used for TTL tracking?
     
     while True:
-        startedSelect = time.time()
+        startedSelect = time.time() #returns the number of seconds passed since epoch (transmitting data back/forth) 
 
         whatReady = select.select([mySocket], [], [], timeLeft) 
-        howLongInSelect = (time.time() - startedSelect)
-        if whatReady[0] == []: # Timeout 
+        howLongInSelect = (time.time() - startedSelect) #how much time from started time till select has passed
+        if whatReady[0] == []: # Timeout if the data that is ready is empty 
             return "Request timed out."
 
-        timeReceived = time.time()
-        recPacket, addr = mySocket.recvfrom(1024)
-
+        timeReceived = time.time() #caluate the amount time to data finally be recieved 
+        recPacket, addr = mySocket.recvfrom(1024) #reads 1024 number of bits sent from mySocket at a time
+        #recvfrom() Returns a bytes object read from mySocket and the address of the client socket as a tuple.
         #---------------#
         # Fill in start #
         #---------------#
-
+        icmp_header = recPacket[20:28] #breaks packect into ICMP header, which starts at 20bytes (160 bits) and ends at 28 bytes (224 bits)
             # TODO: Fetch the ICMP header from the IP packet
 
         #-------------#
@@ -88,7 +91,7 @@ def sendOnePing(mySocket, destAddr, ID):
     data = struct.pack("d", time.time())
 
     # Calculate the checksum on the data and the dummy header. 
-    myChecksum = checksum(str(header + data))
+    myChecksum = checksum(''.join(map(chr, header+data)))
 
     # Get the right checksum, and put in the header 
     if sys.platform == 'darwin':
