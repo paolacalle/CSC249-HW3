@@ -66,9 +66,15 @@ def receiveOnePing(mySocket, ID, timeout, destAddr):
         #---------------#
         # Fill in start #
         #---------------#
-        icmpHeader = recPacket[20:28] #parses packect into ICMP header, which starts at 20bytes (160 bits) and ends at 28 bytes (224 bits)
-        requestType, code, revChecksum, revId, revSequence = struct.unpack('bbHHh',icmpHeader) #bbHHh is Python's struct module
+        icmpHeader = recPacket[20:28] #breaks packect into ICMP header, which starts at 20bytes (160 bits) and ends at 28 bytes (224 bits)
+        #requestType, code, revChecksum, revId, revSequence = struct.unpack('bbHHh',icmpHeader)
             # TODO: Fetch the ICMP header from the IP packet
+
+        type = icmpHeader[0:1]
+        code = icmpHeader[1:2]
+        checksum = icmpHeader[2:4]
+        ID = icmpHeader[0:2]
+        sequence = icmpHeader[2:4]
 
         #-------------#
         # Fill in end #
@@ -88,27 +94,25 @@ def sendOnePing(mySocket, destAddr, ID):
     # Make a dummy header with a 0 checksum
  
     # struct -- Interpret strings as packed binary data
-    header = struct.pack("bbHHh", ICMP_ECHO_REQUEST, 0, myChecksum, ID, 1) #returns bytes obj with the string format "bbHHh", ICMP_ECHO_REQUEST, 0, myChecksum, ID, 1 as binary data 
-    data = struct.pack("d", time.time()) #time packet was sent + unicode h 
+    header = struct.pack("bbHHh", ICMP_ECHO_REQUEST, 0, myChecksum, ID, 1) 
+    data = struct.pack("d", time.time())
 
     # Calculate the checksum on the data and the dummy header. 
     myChecksum = checksum(''.join(map(chr, header+data)))
 
     # Get the right checksum, and put in the header 
-    if sys.platform == 'darwin': #sys.platform lets you inspect what operating system/platform (device's software) the code is running on (darwin 
+    if sys.platform == 'darwin':
         # Convert 16-bit integers from host to network byte order 
-        myChecksum = htons(myChecksum) & 0xffff #takes a 16-bit number in host byte order and returns a 16-bit number in network byte order used in TCP/IP networks
+        myChecksum = htons(myChecksum) & 0xffff
     else:
         myChecksum = htons(myChecksum)
 
     header = struct.pack("bbHHh", ICMP_ECHO_REQUEST, 0, myChecksum, ID, 1) 
-    packet = header + data 
+    packet = header + data
 
     mySocket.sendto(packet, (destAddr, 1)) # AF_INET address must be tuple, not str 
     # Both LISTS and TUPLES consist of a number of objects
     # which can be referenced by their position number within the object.
-    
-    # sends packet to destion address 
 
 
 
