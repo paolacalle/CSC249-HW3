@@ -67,14 +67,10 @@ def receiveOnePing(mySocket, ID, timeout, destAddr):
         # Fill in start #
         #---------------#
         icmpHeader = recPacket[20:28] #breaks packect into ICMP header, which starts at 20bytes (160 bits) and ends at 28 bytes (224 bits)
-        #requestType, code, revChecksum, revId, revSequence = struct.unpack('bbHHh',icmpHeader)
+        recivedType, recivedCode, recivedChecksum, recivedId, recivedSequence = struct.unpack('bbHHh',icmpHeader)
             # TODO: Fetch the ICMP header from the IP packet
-
-        type = icmpHeader[0:1]
-        code = icmpHeader[1:2]
-        checksum = icmpHeader[2:4]
-        ID = icmpHeader[0:2]
-        sequence = icmpHeader[2:4]
+        recivedData = struct.unpack('b', icmpHeader)
+        print(recivedData)
 
         #-------------#
         # Fill in end #
