@@ -73,7 +73,8 @@ def receiveOnePing(mySocket, ID, timeout, destAddr):
             # TODO: Fetch the ICMP header from the IP packet
         recivedData = struct.unpack('d', icmpHeader)
         howLongToRecive =  time.time() - float('.'.join(str(ele) for ele in recivedData))
-        print(howLongToRecive)
+
+        print("Amount time to recieve data: " + str(howLongToRecive))
 
         #-------------#
         # Fill in end #
@@ -148,4 +149,4 @@ def ping(host, timeout=1):
     return delay
 
 # Runs program
-ping("google.com")
+ping("smith.edu")
