@@ -1,8 +1,8 @@
 # Attribution: this assignment is based on ICMP Pinger Lab from Computer Networking: a Top-Down Approach by Jim Kurose and Keith Ross. 
 # It was modified for use in CSC249: Networks at Smith College by R. Jordan Crouser in Fall 2022
-
-from socket import * 
-import os
+import datetime
+from socket import *
+import os #operating system
 import sys 
 import struct 
 import time 
@@ -60,22 +60,32 @@ def receiveOnePing(mySocket, ID, timeout, destAddr):
         if whatReady[0] == []: # Timeout if the data that is ready is empty 
             return "Request timed out."
 
-        timeReceived = time.time() #caluate the amount time to data finally be recieved 
+        timeReceived = time.time() #caluate the amount time to data finally be recieved
+
         recPacket, addr = mySocket.recvfrom(1024) #reads 1024 number of bits sent from mySocket at a time
         #recvfrom() Returns a bytes object read from mySocket and the address of the client socket as a tuple.
         #---------------#
         # Fill in start #
         #---------------#
 
+        # TODO: Fetch the ICMP header from the IP packet
+
         icmpHeader = recPacket[20:28] #breaks packect into ICMP header, which starts at 20bytes (160 bits) and ends at 28 bytes (224 bits)
 
-        recivedType, recivedCode, recivedChecksum, recivedId, recivedSequence = struct.unpack('bbHHh',icmpHeader)
-            # TODO: Fetch the ICMP header from the IP packet
-        recivedData = struct.unpack('d', icmpHeader)
-        print("Time sent: " + str(recivedData))
-        howLongToRecive =  time.time() - float('.'.join(str(ele) for ele in recivedData))
+        recType, recCode, recChecksum, recID, recSequence = struct.unpack('bbHHh',icmpHeader)
 
-        print("Amount time to recieve data: " + str(howLongToRecive))
+        # timeData = struct.unpack('d', icmpHeader) works but gives me it is a different type to timeRecieved, thus does not allow me to subtract
+        if recType == 0 & recCode == 0:
+            bytes = struct.calcsize("d")
+            timeData = struct.unpack('d', recPacket[28:28 + bytes])[0] #unpacks and data is the d or couple of bytes that come after ICMPheader because packet = header + data
+            return timeReceived - timeData
+        else:
+            return "Type and/or code are not set to 0"
+
+        #print(type(timeData))
+        #https://stackoverflow.com/questions/20483239/how-can-i-convert-a-tuple-to-a-float-in-python explians why [0] helps with formatting
+        #route method uses the [0] tooo!!!
+
 
         #-------------#
         # Fill in end #
@@ -95,7 +105,8 @@ def sendOnePing(mySocket, destAddr, ID):
     # Make a dummy header with a 0 checksum
  
     # struct -- Interpret strings as packed binary data
-    header = struct.pack("bbHHh", ICMP_ECHO_REQUEST, 0, myChecksum, ID, 1) 
+    header = struct.pack("bbHHh", ICMP_ECHO_REQUEST, 0, myChecksum, ID, 1)
+
     data = struct.pack("d", time.time())
 
     # Calculate the checksum on the data and the dummy header. 
@@ -150,4 +161,6 @@ def ping(host, timeout=1):
     return delay
 
 # Runs program
-ping("google.com")
+if __name__ == "__main__":
+    ping("google.com")
+# ping("youtube.com")

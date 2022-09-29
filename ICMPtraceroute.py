@@ -22,13 +22,29 @@ def build_packet():
     # In the sendOnePing() method of the ICMP Ping exercise, firstly the header of our
     # packet to be sent was made, secondly the checksum was appended to the header and
     # then finally the complete packet was sent to the destination.
-
     #---------------#
     # Fill in start #
     #---------------#
 
+    myChecksum = 0
+
+    ID = os.getpid() & 0xFFFF  # copied off ICMPpinger.py doOnePing method, not sure how else to define ID
+
+    header = struct.pack("bbHHh", ICMP_ECHO_REQUEST, 0, myChecksum, ID, 1)
+
+    data = struct.pack("d", time.time())
+
+    myChecksum = checksum(''.join(map(chr, header + data)))
+
+    if sys.platform == 'darwin':
+        # Convert 16-bit integers from host to network byte order
+        myChecksum = htons(myChecksum) & 0xffff
+    else:
+        myChecksum = htons(myChecksum)
+
+    # Append checksum to the header.
+    header = struct.pack("bbHHh", ICMP_ECHO_REQUEST, 0, myChecksum, ID, 1)
         # TODO: Make the header in a similar way to the ping exercise.
-        # Append checksum to the header.
         
     #-------------#
     # Fill in end #
@@ -38,7 +54,7 @@ def build_packet():
     packet = header + data
     return packet
 
-def get_route(hostname):
+def get_route(hostname, recPacket=None):
     timeLeft = TIMEOUT
     for ttl in range(1,MAX_HOPS):
         for tries in range(TRIES):
@@ -47,8 +63,10 @@ def get_route(hostname):
             #---------------#
             # Fill in start #
             #---------------#
-
-                # TODO: Make a raw socket named mySocket
+            #currentProtocol = "ICMP" #https://pythontic.com/modules/socket/getprotobyname, oh I just noticed pinger uses it
+            icmp = getprotobyname("icmp")
+            mySocket = socket(AF_INET, SOCK_RAW, icmp)
+            # TODO: Make a raw socket named mySocket
 
             #-------------#
             # Fill in end #
@@ -66,14 +84,14 @@ def get_route(hostname):
                 howLongInSelect = (time.time() - startedSelect)
 
                 if whatReady[0] == []: # Timeout
-                    print(" * * * Request timed out.")
+                    print(" * * * Request timed out...")
 
                 recvPacket, addr = mySocket.recvfrom(1024)
                 timeReceived = time.time()
                 timeLeft = timeLeft - howLongInSelect
 
                 if timeLeft <= 0:
-                    print(" * * * Request timed out.")
+                    print(" * * * Request timed out!")
 
             except timeout:
                 continue
@@ -82,7 +100,10 @@ def get_route(hostname):
                 #---------------#
                 # Fill in start #
                 #---------------#
-
+                icmpHeader = recvPacket[20:21]
+                types = struct.unpack('b', icmpHeader)[0]
+                #recType, recCode, recChecksum, recID, recSequence = struct.unpack('bbHHh', icmpHeader)
+                print(types)
                     #TODO: Fetch the icmp type from the IP packet
 
                 #-------------#
@@ -91,7 +112,7 @@ def get_route(hostname):
                 
                 if types == 11:
                     bytes = struct.calcsize("d")
-                    timeSent = struct.unpack("d", recvPacket[28:28 +bytes])[0]
+                    timeSent = struct.unpack("d", recvPacket[28:28 +bytes])[0] #I used this for pinger
                     print(" %d rtt=%.0f ms %s" %(ttl, (timeReceived -t)*1000, addr[0]))
 
                 elif types == 3:
