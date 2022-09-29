@@ -75,16 +75,17 @@ def receiveOnePing(mySocket, ID, timeout, destAddr):
         recType, recCode, recChecksum, recID, recSequence = struct.unpack('bbHHh',icmpHeader)
 
         # timeData = struct.unpack('d', icmpHeader) works but gives me it is a different type to timeRecieved, thus does not allow me to subtract
-        if recType == 0 & recCode == 0:
+
+        if ID == recID:
             bytes = struct.calcsize("d")
             timeData = struct.unpack('d', recPacket[28:28 + bytes])[0] #unpacks and data is the d or couple of bytes that come after ICMPheader because packet = header + data
             return timeReceived - timeData
         else:
-            return "Type and/or code are not set to 0"
+            return "IDs are not the same!"
 
         #print(type(timeData))
         #https://stackoverflow.com/questions/20483239/how-can-i-convert-a-tuple-to-a-float-in-python explians why [0] helps with formatting
-        #route method uses the [0] tooo!!!
+        #route method in ICMProute uses the [0] tooo!!!
 
 
         #-------------#
@@ -154,7 +155,7 @@ def ping(host, timeout=1):
     print("")
 
     # Send ping requests to a server separated by approximately one second 
-    while True :
+    while True:
         delay = doOnePing(dest, timeout) 
         print(delay)
         time.sleep(1) # one second 
@@ -162,5 +163,9 @@ def ping(host, timeout=1):
 
 # Runs program
 if __name__ == "__main__":
-    ping("google.com")
-# ping("youtube.com")
+    #ping("google.com")
+    #ping("youtube.com")
+    #ping("smith.edu")
+    #ping("www.delallama.net")
+    #ping("goldrestaurant.co.za")
+    ping("eatandcook.asia")

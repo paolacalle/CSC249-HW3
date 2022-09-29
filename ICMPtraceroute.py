@@ -54,7 +54,7 @@ def build_packet():
     packet = header + data
     return packet
 
-def get_route(hostname, recPacket=None):
+def get_route(hostname):
     timeLeft = TIMEOUT
     for ttl in range(1,MAX_HOPS):
         for tries in range(TRIES):
@@ -134,4 +134,8 @@ def get_route(hostname, recPacket=None):
             finally:
                 mySocket.close()
 
-get_route("google.com")
+#get_route("smith.edu")
+#get_route("delallama.net")
+#get_route("goldrestaurant.co.za")
+get_route("eatandcook.asia")
+
